@@ -1,0 +1,148 @@
+#first run the sudo -s command before running the benchmark.py file 
+
+
+python3 benchmark.py /private/tmp/fuse_mount
+Starting benchmark on /private/tmp/fuse_mount...
+Creating 15 files, 2 writes and 5 reads per file.
+Created and wrote to /private/tmp/fuse_mount/file0.txt
+Created and wrote to /private/tmp/fuse_mount/file1.txt
+Created and wrote to /private/tmp/fuse_mount/file2.txt
+Created and wrote to /private/tmp/fuse_mount/file3.txt
+Created and wrote to /private/tmp/fuse_mount/file4.txt
+Created and wrote to /private/tmp/fuse_mount/file5.txt
+Created and wrote to /private/tmp/fuse_mount/file6.txt
+Created and wrote to /private/tmp/fuse_mount/file7.txt
+Created and wrote to /private/tmp/fuse_mount/file8.txt
+Created and wrote to /private/tmp/fuse_mount/file9.txt
+Created and wrote to /private/tmp/fuse_mount/file10.txt
+Created and wrote to /private/tmp/fuse_mount/file11.txt
+Created and wrote to /private/tmp/fuse_mount/file12.txt
+Created and wrote to /private/tmp/fuse_mount/file13.txt
+Created and wrote to /private/tmp/fuse_mount/file14.txt
+Write phase completed in 0.10 seconds
+Read /private/tmp/fuse_mount/file0.txt 5 times
+Read /private/tmp/fuse_mount/file1.txt 5 times
+Read /private/tmp/fuse_mount/file2.txt 5 times
+Read /private/tmp/fuse_mount/file3.txt 5 times
+Read /private/tmp/fuse_mount/file4.txt 5 times
+Read /private/tmp/fuse_mount/file5.txt 5 times
+Read /private/tmp/fuse_mount/file6.txt 5 times
+Read /private/tmp/fuse_mount/file7.txt 5 times
+Read /private/tmp/fuse_mount/file8.txt 5 times
+Read /private/tmp/fuse_mount/file9.txt 5 times
+Read /private/tmp/fuse_mount/file10.txt 5 times
+Read /private/tmp/fuse_mount/file11.txt 5 times
+Read /private/tmp/fuse_mount/file12.txt 5 times
+Read /private/tmp/fuse_mount/file13.txt 5 times
+Read /private/tmp/fuse_mount/file14.txt 5 times
+Read phase completed in 0.00 seconds
+Directory listing phase completed in 0.00 seconds
+Triggering shutdown to display stats...
+Created /csci555project/shutdown. Waiting for stats...
+
+---------------------------------------------------------------------------------------------
+sudo python3 filesystemlru.py /private/tmp/fuse_mount
+Mounting filesystem at /private/tmp/fuse_mount...
+To stop the filesystem and see stats, create a file named 'shutdown' in the current directory
+
+Shutdown signal received...
+Filesystem Statistics:
+access_count:
+  /: 255
+  /._file0.txt: 9
+  /._file1.txt: 9
+  /._file10.txt: 9
+  /._file11.txt: 9
+  /._file12.txt: 9
+  /._file13.txt: 9
+  /._file14.txt: 9
+  /._file2.txt: 9
+  /._file3.txt: 9
+  /._file4.txt: 9
+  /._file5.txt: 9
+  /._file6.txt: 9
+  /._file7.txt: 9
+  /._file8.txt: 9
+  /._file9.txt: 9
+  /file0.txt: 25
+  /file1.txt: 25
+  /file10.txt: 25
+  /file11.txt: 25
+  /file12.txt: 25
+  /file13.txt: 25
+  /file14.txt: 25
+  /file2.txt: 25
+  /file3.txt: 25
+  /file4.txt: 25
+  /file5.txt: 25
+  /file6.txt: 25
+  /file7.txt: 25
+  /file8.txt: 25
+  /file9.txt: 25
+cache_hits:
+  /: 0
+  /._file0.txt: 3
+  /._file1.txt: 3
+  /._file10.txt: 3
+  /._file11.txt: 3
+  /._file12.txt: 3
+  /._file13.txt: 3
+  /._file14.txt: 3
+  /._file2.txt: 3
+  /._file3.txt: 3
+  /._file4.txt: 3
+  /._file5.txt: 3
+  /._file6.txt: 3
+  /._file7.txt: 3
+  /._file8.txt: 3
+  /._file9.txt: 3
+  /file0.txt: 2
+  /file1.txt: 2
+  /file10.txt: 2
+  /file11.txt: 2
+  /file12.txt: 2
+  /file13.txt: 2
+  /file14.txt: 2
+  /file2.txt: 2
+  /file3.txt: 2
+  /file4.txt: 2
+  /file5.txt: 2
+  /file6.txt: 2
+  /file7.txt: 2
+  /file8.txt: 2
+  /file9.txt: 2
+cache_misses:
+  /: 0
+  /._file0.txt: 6
+  /._file1.txt: 6
+  /._file10.txt: 6
+  /._file11.txt: 6
+  /._file12.txt: 6
+  /._file13.txt: 6
+  /._file14.txt: 6
+  /._file2.txt: 6
+  /._file3.txt: 6
+  /._file4.txt: 6
+  /._file5.txt: 6
+  /._file6.txt: 6
+  /._file7.txt: 6
+  /._file8.txt: 6
+  /._file9.txt: 6
+  /file0.txt: 23
+  /file1.txt: 23
+  /file10.txt: 23
+  /file11.txt: 23
+  /file12.txt: 23
+  /file13.txt: 23
+  /file14.txt: 23
+  /file2.txt: 23
+  /file3.txt: 23
+  /file4.txt: 23
+  /file5.txt: 23
+  /file6.txt: 23
+  /file7.txt: 23
+  /file8.txt: 23
+  /file9.txt: 23
+Attempting to unmount... 
+
+---------------------------------------------------------------
