@@ -5,9 +5,15 @@ import sys
 import errno
 import threading
 import time
+import pickle
+import numpy as np
 from fuse import FUSE, FuseOSError, Operations
 from stat import S_IFDIR, S_IFREG
 from collections import OrderedDict
+from tensorflow.keras.models import load_model
+from pathlib import Path
+
+
 
 class MemoryFS(Operations):
     def __init__(self):
@@ -31,12 +37,38 @@ class MemoryFS(Operations):
         }
         self.shutdown_flag = threading.Event()  # For graceful shutdown
 
+        #loading LSTM model
+        self.lstm_model = load_model("csci555/lstm_cache_model.h5")
+        with open("csci555/path_to_index.pkl", "rb") as f:
+            self.path_to_index = pickle.load(f)
+        with open("csci555/index_to_path.pkl", "rb") as f:
+            self.index_to_path = pickle.load(f)
+
+        #initializes the recent access list
+        self.n_steps = 5
+        self.recent_access_ids = []
+
+
+    # def _update_cache(self, path, data):
+    #     if path in self.cache:
+    #         self.cache.move_to_end(path)
+    #     else:
+    #         if len(self.cache) >= self.cache_size:
+    #             self.cache.popitem(last=False)
+    #         self.cache[path] = data
+    
+    #cache keeping the predicted file in memory and evict something else instead
     def _update_cache(self, path, data):
         if path in self.cache:
             self.cache.move_to_end(path)
         else:
             if len(self.cache) >= self.cache_size:
-                self.cache.popitem(last=False)
+                predicted_path = self.predict_next_file()
+                for evict_path in self.cache:
+                    if evict_path != predicted_path:
+                        print(f"[LSTM] Evicting {evict_path}, keeping predicted {predicted_path}")
+                        del self.cache[evict_path]
+                        break
             self.cache[path] = data
 
     def _get_from_cache(self, path):
@@ -46,6 +78,16 @@ class MemoryFS(Operations):
             return self.cache[path]
         self.stats['cache_misses'][path] = self.stats['cache_misses'].get(path, 0) + 1
         return None
+    
+    #predict the next file it thinks the user will access
+    def predict_next_file(self):
+        if len(self.recent_access_ids) < self.n_steps:
+            return None
+        input_seq = np.array(self.recent_access_ids).reshape((1, self.n_steps))
+        probs = self.lstm_model.predict(input_seq, verbose=0)
+        pred_idx = np.argmax(probs)
+        return self.index_to_path.get(pred_idx)
+
 
     def _get_path(self, partial):
         if partial.startswith("/"):
@@ -165,9 +207,19 @@ class MemoryFS(Operations):
         if path not in self.files:
             raise FuseOSError(errno.ENOENT)
         self.stats['access_count'][path] = self.stats['access_count'].get(path, 0) + 1
-        # logging the accessed path for LSTM
+        
+        # logging the accessed path for LSTM...remove if model is already trained
         with open("access_log.txt", "a") as log:
             log.write(f"{path}\n")
+
+        #records the last 5 file accesses for LSTM prediction input
+        if path in self.path_to_index:
+            idx = self.path_to_index[path]
+            self.recent_access_ids.append(idx)
+            if len(self.recent_access_ids) > self.n_steps:
+                self.recent_access_ids.pop(0)
+
+        
         cached_data = self._get_from_cache(path)
         if cached_data is None:
             if path not in self.data:
@@ -180,9 +232,17 @@ class MemoryFS(Operations):
         if path not in self.files:
             raise FuseOSError(errno.ENOENT)
         self.stats['access_count'][path] = self.stats['access_count'].get(path, 0) + 1
-    #    logging the accessed path for LSTM
+        #  logging the accessed path for LSTM
         with open("access_log.txt", "a") as log:
             log.write(f"{path}\n")
+
+        #records the last 5 file accesses for LSTM prediction input
+        if path in self.path_to_index:
+            idx = self.path_to_index[path]
+            self.recent_access_ids.append(idx)
+            if len(self.recent_access_ids) > self.n_steps:
+                self.recent_access_ids.pop(0)
+
         current_data = self._get_from_cache(path)
         if current_data is None:
             current_data = self.data.get(path, b'')
