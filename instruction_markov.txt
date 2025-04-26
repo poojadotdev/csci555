@@ -1,0 +1,41 @@
+Save Files: Save the three code blocks above as filesystem_markov.py, train_markov_cache.py, and longer_benchmark.py in the same directory.
+Create Mountpoint: Create an empty directory where you want to mount the filesystem (e.g., mkdir /tmp/fuse_mount). Replace /tmp/fuse_mount with your desired path in the commands below.
+Delete Old Logs/Models (Optional but Recommended): Remove any existing access_log.txt and markov_probabilities.json from the directory where you saved the scripts to ensure you start fresh.
+Bash
+
+rm -f access_log.txt markov_probabilities.json shutdown
+Start FUSE (Untrained): Open your first terminal window, navigate (cd) to the directory where you saved the files, and run the FUSE filesystem. It will print that the probabilities file wasn't found, which is expected.
+Bash
+
+python3 filesystem_markov.py /tmp/fuse_mount
+Keep this terminal open and running.
+Run Benchmark (Generate Log): Open a second terminal window, navigate (cd) to the same directory, and run the benchmark script once. This run populates access_log.txt. The performance numbers and stats from this specific run are not your final results.
+Bash
+
+python3 markov_benchmark.py /tmp/fuse_mount
+Wait for Shutdown: The benchmark script will create the shutdown file at the end. Wait for the first terminal (running the FUSE script) to detect this, print its (untrained) statistics, unmount, and exit.
+Phase 2: Training the Model
+
+Train: In your second terminal (or the first one, now that the FUSE process has stopped), run the training script. It will read access_log.txt and create markov_probabilities.json.
+Bash
+
+python3 train_markov_model.py
+Check its output to ensure it processed accesses and saved the probabilities.
+Phase 3: Benchmarking the Trained System
+
+Start FUSE (Trained): In your first terminal, start the FUSE filesystem again. This time, it should find and load markov_probabilities.json.
+Bash
+
+python3 filesystem_markov.py /tmp/fuse_mount
+Again, keep this terminal open and running.
+Run Benchmark (Get Results): In your second terminal, run the benchmark script again. This run measures the performance of the filesystem using the trained Markov model.
+Bash
+
+python3 longer_benchmark.py /tmp/fuse_mount
+Collect Results:
+Note the timing results printed by longer_benchmark.py in the second terminal for each phase (Write, Read Sequential, Read Reverse, Read Random, List Directory).
+Watch the first terminal (running FUSE). When the benchmark finishes and creates the shutdown file, the FUSE process will print the final Filesystem Statistics (Accesses, Hits, Misses, Prefetches). These statistics correspond to the benchmark run you just completed in step 9.
+Analyze: Compare the timing results and the final statistics (especially cache hits, misses, and prefetches) to runs using different caching algorithms (like your original LRU) or runs without a trained model to see the impact of the Markov prefetching.
+This sequence ensures you train the model based on the benchmark's access pattern and then test the performance using that trained model.
+
+
