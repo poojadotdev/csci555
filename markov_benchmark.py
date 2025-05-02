@@ -145,15 +145,18 @@ def benchmark_fuse_filesystem(mountpoint):
                     print(f"Error: File disappeared before read: {file_path}")
                     read_errors += 1
                     continue # Skip this file
-
+                # print(f" i am in the markov benchmakr file!! before entering for loop... reads perfile should be 10 default....it is:  {READS_PER_FILE}")
                 for r in range(READS_PER_FILE):
-                    with open(file_path, 'rb') as f:
-                        content = f.read() # Read the whole file
+                    fd = os.open(file_path, os.O_RDONLY)  # Open file using syscall (triggers FUSE read)
+                    try:
+                        content = os.read(fd, final_file_size_expected)  # syscall read
                         read_len = len(content)
-                        # Optional: Verify size roughly matches expected size
                         if read_len != final_file_size_expected:
                             print(f"  Warning: Size mismatch reading {file_path} (read {r+1}/{READS_PER_FILE}). Expected {final_file_size_expected}, got {read_len}")
                         total_bytes_read_actual += read_len
+                        time.sleep(0.01)
+                    finally:
+                        os.close(fd)  # Always close the file descriptor
 
                 if (count + 1) % (NUM_FILES // 10 or 1) == 0 or count == NUM_FILES - 1: # Progress indicator
                     print(f"  Read {count + 1}/{NUM_FILES} files in {pattern_name} order...")
@@ -187,6 +190,15 @@ def benchmark_fuse_filesystem(mountpoint):
     random.shuffle(random_indices)
     run_read_phase(4, "Random", random_indices)
 
+    # 5. Hotspot Read
+    hotspot_indices = random.sample(range(NUM_FILES), 5)  #picking 5 random hotspots
+    hotspot_file_order = []
+    for _ in range(20):  #read 20 times
+        hotspot_file_order.extend(hotspot_indices)
+
+    run_read_phase(5, "Hotspot", hotspot_file_order)
+
+
     # --- Directory Listing Phase ---
     print(f"[5] Starting Directory Listing Phase ({LISTDIR_ITERATIONS} iterations)...")
     start_time = time.time()
@@ -208,10 +220,13 @@ def benchmark_fuse_filesystem(mountpoint):
     if list_errors > 0: print(f"  WARNING: Encountered {list_errors} listdir errors.")
     print("-"*70)
 
+    # Test read to verify if READ operation is triggered
+ 
     # --- Trigger Shutdown ---
     print("[6] Triggering FUSE shutdown to display stats...")
     # Ensure shutdown file is created where the FUSE script runs (usually CWD)
     shutdown_file = os.path.join(os.getcwd(), "shutdown")
+    print("[DEBUG] Creating shutdown file at:", shutdown_file)
     try:
         with open(shutdown_file, 'w') as f:
             f.write("shutdown")
@@ -220,6 +235,7 @@ def benchmark_fuse_filesystem(mountpoint):
         print(f"Error creating shutdown file {shutdown_file}: {e}")
         print("Please manually stop the FUSE process if needed.")
         sys.exit(1) # Exit if we can't signal shutdown
+
 
     # Give the FUSE process time to detect the file, print stats, and unmount
     print("Benchmark finished. Check FUSE process output for statistics.")
